@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="../../../../layout/custom_preview.xml" value="0.5583333333333333" />
+        <entry key="../../.gradle/caches/transforms-3/cadf21eacd0260757bfcbb6421438691/transformed/appcompat-1.3.0/res/layout/support_simple_spinner_dropdown_item.xml" value="0.21603260869565216" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.5302083333333333" />
+        <entry key="app/src/main/res/layout/activity_main2.xml" value="0.5302083333333333" />
+        <entry key="app/src/main/res/layout/activity_view_application.xml" value="0.5302083333333333" />
+        <entry key="app/src/main/res/layout/activity_view_supported_application.xml" value="0.23489583333333333" />
+        <entry key="app/src/main/res/layout/content_main.xml" value="0.5302083333333333" />
+        <entry key="app/src/main/res/layout/content_view_supported_application.xml" value="0.23489583333333333" />
+        <entry key="app/src/main/res/layout/fragment_first.xml" value="0.23489583333333333" />
+        <entry key="app/src/main/res/layout/fragment_second.xml" value="0.3255208333333333" />
+        <entry key="app/src/main/res/layout/fragment_supported_application.xml" value="0.5302083333333333" />
+        <entry key="app/src/main/res/layout/fragment_supported_application_list.xml" value="0.5151041666666667" />
+        <entry key="app/src/main/res/layout/item_logger_output.xml" value="0.67" />
+        <entry key="app/src/main/res/layout/item_supported_application.xml" value="0.5302083333333333" />
+        <entry key="app/src/main/res/layout/layout.xml" value="0.5151041666666667" />
+        <entry key="app/src/main/res/layout/sample_view_application_list.xml" value="0.5151041666666667" />
+        <entry key="app/src/main/res/layout/view_supported_application_fragment.xml" value="0.2911458333333333" />
+        <entry key="app/src/main/res/xml/file_provider_paths.xml" value="1.542857142857143" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>
