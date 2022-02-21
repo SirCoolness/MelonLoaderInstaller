@@ -21,6 +21,7 @@
         <entry key="app/src/main/res/layout/sample_view_application_list.xml" value="0.5151041666666667" />
         <entry key="app/src/main/res/layout/view_supported_application_fragment.xml" value="0.2911458333333333" />
         <entry key="app/src/main/res/xml/file_provider_paths.xml" value="1.542857142857143" />
+        <entry key="app/src/main/res/xml/network_security_config.xml" value="0.5302083333333333" />
       </map>
     </option>
   </component>

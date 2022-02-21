@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,6 +29,7 @@ import com.melonloader.installer.core.ILogger;
 import com.melonloader.installer.core.Main;
 import com.melonloader.installer.core.Properties;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,6 +37,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -42,6 +47,7 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
     private SupportedApplication application;
     private LoggerHelper loggerHelper;
     private ApkInstallerHelper installerHelper = null;
+    private String UnitySource = "http://lemon.sircoolness.dev/android/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +125,7 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
         String keystoreLocation = Paths.get(getExternalFilesDir(null).toString(), "temp", "melonloader.keystore").toString();
 
         Button patchButton = findViewById(R.id.patchButton);
+        Path tempPath = Paths.get(getExternalFilesDir(null).toString(), "temp", application.appName);
 
         AsyncTask.execute(() -> {
             runOnUiThread(() -> {
@@ -128,10 +135,29 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
                 patchButton.setText("PATCHING");
             });
 
+            loggerHelper.Log("Getting unity version");
+
+            String unityVersion = Main.DetectUnityVersion(application.apkLocation, tempPath.toString());
+
+            if (unityVersion == null) {
+                loggerHelper.Log("Failed to detect version.");
+                return;
+            }
+
+            loggerHelper.Log("Unity Version: " + unityVersion);
+            loggerHelper.Log("Downloading Unity Dependencies");
+
+            try {
+                downloadFile(UnitySource + unityVersion + ".zip", unityAssetsLocation);
+            } catch (Exception e) {
+                e.printStackTrace();
+                loggerHelper.Log(e.toString());
+                return;
+            }
+
             loggerHelper.Log("Preparing Assets");
 
             copyAssets("installer_deps.zip", depsLocation);
-            copyAssets("unity_libs.zip", unityAssetsLocation);
             copyAssets("zipalign", zipAlignLocation);
             copyAssets("cert.bks", keystoreLocation);
 
@@ -140,7 +166,6 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
 
             loggerHelper.Log("Starting patch");
 
-            Path tempPath = Paths.get(getExternalFilesDir(null).toString(), "temp", application.appName);
             boolean success = Main.Run(new Properties() {{
                 targetApk = application.apkLocation;
                 tempDir = tempPath.toString();
@@ -263,5 +288,33 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
 
         if (installerHelper != null)
             installerHelper.onActivityResult(requestCode, resultCode, data);
+    }
+
+    protected void downloadFile(String _url, String _output) throws IOException {
+        URL url = new URL(_url);
+        URLConnection connection = url.openConnection();
+        connection.connect();
+
+        int lenghtOfFile = connection.getContentLength();
+
+        // download the file
+        InputStream input = new BufferedInputStream(url.openStream(),
+                8192);
+
+        // Output stream
+        OutputStream output = new FileOutputStream(_output);
+
+        byte data[] = new byte[1024];
+
+        int count;
+        while ((count = input.read(data)) != -1) {
+            output.write(data, 0, count);
+        }
+
+        output.flush();
+
+        // closing streams
+        output.close();
+        input.close();
     }
 }
