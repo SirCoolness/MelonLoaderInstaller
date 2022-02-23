@@ -4,7 +4,10 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.Log;
+
+import androidx.loader.content.AsyncTaskLoader;
 
 import com.melonloader.installer.core.Main;
 
@@ -26,6 +29,8 @@ public class SupportedApplication {
     public String appName;
     public String apkLocation;
     public String packageName;
+    public String unityVersion;
+    private boolean getVersionAttempted = false;
 
     public SupportedApplication(PackageManager pm, ApplicationInfo info)
     {
@@ -41,5 +46,35 @@ public class SupportedApplication {
     public void CheckPatched()
     {
         patched = Main.IsPatched(application.publicSourceDir);
+    }
+
+    public void TryDetectVersion(String tempDir)
+    {
+        TryDetectVersion(tempDir, () -> {});
+    }
+
+    public void TryDetectVersion(String tempDir, Runnable callback)
+    {
+        if (getVersionAttempted)
+            return;
+
+        getVersionAttempted = true;
+
+        try {
+            Files.createDirectories(Paths.get(tempDir));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        AsyncTask.execute(() -> {
+            unityVersion = Main.DetectUnityVersion(apkLocation, tempDir);
+
+            if (unityVersion == null) {
+                return;
+            }
+
+            callback.run();
+        });
     }
 }

@@ -155,7 +155,6 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
         String depsLocation = Paths.get(MelonLoaderBase, "temp", "dependencies.zip").toString();
         String unityAssetsLocation = Paths.get(MelonLoaderBase, "temp", "unity.zip").toString();
 
-//        String zipAlignLocation = Paths.get("/data", "data", "com.melonloader.installer", "ml-zipalign").toString();
         String zipAlignLocation = Paths.get(getFilesDir().toString(), "ml-zipalign").toString();
 
         Button patchButton = findViewById(R.id.patchButton);
@@ -169,27 +168,7 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
                 patchButton.setText("PATCHING");
             });
 
-            loggerHelper.Log(MelonLoaderBase);
-
-//            loggerHelper.Log("Getting unity version (can take up to 2 minutes)");
-//
-//            String unityVersion = Main.DetectUnityVersion(application.apkLocation, tempPath.toString());
-//
-//            if (unityVersion == null) {
-//                loggerHelper.Log("Failed to detect version.");
-//                return;
-//            }
-//
-//            loggerHelper.Log("Unity Version: " + unityVersion);
-//            loggerHelper.Log("Downloading Unity Dependencies");
-//
-//            try {
-//                downloadFile(UnitySource + unityVersion + ".zip", unityAssetsLocation);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                loggerHelper.Log(e.toString());
-//                return;
-//            }
+            loggerHelper.Log("Build Directory: [" + MelonLoaderBase + "]");
 
             loggerHelper.Log("Preparing Assets");
 
@@ -225,9 +204,6 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
                 }
 
                 loggerHelper.Log("Application Successfully patched. Reinstalling.");
-
-                if (1==1)
-                    return;
 
                 String finalOutputApk = outputApk;
                 runOnUiThread(() -> {

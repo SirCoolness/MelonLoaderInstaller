@@ -24,11 +24,14 @@ import com.melonloader.installer.R;
 import com.melonloader.installer.SupportedApplication;
 import com.melonloader.installer.databinding.ActivityMainBinding;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
     List<SupportedApplication> supportedApplications;
+    ListView listview;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -40,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         SupportedApplicationsAdapter adapter = new SupportedApplicationsAdapter(this, supportedApplications);
 
-        ListView listview = (ListView) findViewById(R.id.application_list);
+        listview = (ListView) findViewById(R.id.application_list);
         listview.setAdapter(adapter);
         listview.setOnItemClickListener(this);
     }
@@ -69,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
             // Lookup view for data population
             TextView applicationName = convertView.findViewById(R.id.applicationNameList);
+            TextView unityVersion = convertView.findViewById(R.id.unityVersionList);
             ImageView applicationIcon = convertView.findViewById(R.id.applicationIconList);
             TextView applicationPatched = convertView.findViewById(R.id.isPatchedList);
             // Populate the data into the template view using the data object
@@ -77,6 +81,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             applicationIcon.setImageDrawable(application.icon);
 
             applicationPatched.setVisibility(application.patched ? View.VISIBLE : View.GONE);
+
+            if (application.unityVersion == null) {
+                unityVersion.setVisibility(View.GONE);
+                Path tempPath = Paths.get(getExternalFilesDir(null).toString(), "temp", application.appName);
+                application.TryDetectVersion(tempPath.toString(), () -> { runOnUiThread(() -> { notifyDataSetChanged(); }); });
+//                application.TryDetectVersion(tempPath.toString(), () -> { notifyDataSetChanged(); });
+            } else {
+                unityVersion.setText(application.unityVersion);
+                unityVersion.setVisibility(View.VISIBLE);
+            }
 
             // Return the completed view to render on screen
             return convertView;
