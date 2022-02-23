@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -12,6 +13,8 @@ import android.content.res.AssetManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,6 +26,7 @@ import android.widget.Toast;
 
 import com.melonloader.installer.ApkInstallerHelper;
 import com.melonloader.installer.ApplicationFinder;
+import com.melonloader.installer.BuildConfig;
 import com.melonloader.installer.R;
 import com.melonloader.installer.SupportedApplication;
 import com.melonloader.installer.core.ILogger;
@@ -30,24 +34,31 @@ import com.melonloader.installer.core.Main;
 import com.melonloader.installer.core.Properties;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.Provider;
+import java.security.cert.CertificateException;
 
 public class ViewApplication extends AppCompatActivity implements View.OnClickListener {
     private SupportedApplication application;
     private LoggerHelper loggerHelper;
     private ApkInstallerHelper installerHelper = null;
-    private String UnitySource = "http://lemon.sircoolness.dev/android/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +100,19 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
         appName.setText(application.appName);
 
         loggerHelper = new LoggerHelper(this);
+        Main._properties.logger = loggerHelper;
+    }
+
+    private void requestWritePermission()
+    {
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE }, 100);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override
@@ -116,16 +140,26 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
     protected void StartPatching()
     {
         loggerHelper.Clear();
-        String depsLocation = Paths.get(getExternalFilesDir(null).toString(), "temp", "dependencies.zip").toString();
-        String unityAssetsLocation = Paths.get(getExternalFilesDir(null).toString(), "temp", "unity.zip").toString();
+
+        String PublishedBase = Paths.get(Environment.getExternalStorageDirectory().getPath().toString(), "MelonLoader").toString();
+        try {
+            Files.createDirectories(Paths.get(PublishedBase));
+        } catch (IOException e) {
+            e.printStackTrace();
+            loggerHelper.Log("ERROR: " + e.toString());
+            return;
+        }
+
+        String MelonLoaderBase = getExternalFilesDir(null).toString();
+
+        String depsLocation = Paths.get(MelonLoaderBase, "temp", "dependencies.zip").toString();
+        String unityAssetsLocation = Paths.get(MelonLoaderBase, "temp", "unity.zip").toString();
 
 //        String zipAlignLocation = Paths.get("/data", "data", "com.melonloader.installer", "ml-zipalign").toString();
         String zipAlignLocation = Paths.get(getFilesDir().toString(), "ml-zipalign").toString();
 
-        String keystoreLocation = Paths.get(getExternalFilesDir(null).toString(), "temp", "melonloader.keystore").toString();
-
         Button patchButton = findViewById(R.id.patchButton);
-        Path tempPath = Paths.get(getExternalFilesDir(null).toString(), "temp", application.appName);
+        Path tempPath = Paths.get(MelonLoaderBase, "temp", application.appName);
 
         AsyncTask.execute(() -> {
             runOnUiThread(() -> {
@@ -135,54 +169,70 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
                 patchButton.setText("PATCHING");
             });
 
-            loggerHelper.Log("Getting unity version");
+            loggerHelper.Log(MelonLoaderBase);
 
-            String unityVersion = Main.DetectUnityVersion(application.apkLocation, tempPath.toString());
-
-            if (unityVersion == null) {
-                loggerHelper.Log("Failed to detect version.");
-                return;
-            }
-
-            loggerHelper.Log("Unity Version: " + unityVersion);
-            loggerHelper.Log("Downloading Unity Dependencies");
-
-            try {
-                downloadFile(UnitySource + unityVersion + ".zip", unityAssetsLocation);
-            } catch (Exception e) {
-                e.printStackTrace();
-                loggerHelper.Log(e.toString());
-                return;
-            }
+//            loggerHelper.Log("Getting unity version (can take up to 2 minutes)");
+//
+//            String unityVersion = Main.DetectUnityVersion(application.apkLocation, tempPath.toString());
+//
+//            if (unityVersion == null) {
+//                loggerHelper.Log("Failed to detect version.");
+//                return;
+//            }
+//
+//            loggerHelper.Log("Unity Version: " + unityVersion);
+//            loggerHelper.Log("Downloading Unity Dependencies");
+//
+//            try {
+//                downloadFile(UnitySource + unityVersion + ".zip", unityAssetsLocation);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                loggerHelper.Log(e.toString());
+//                return;
+//            }
 
             loggerHelper.Log("Preparing Assets");
 
             copyAssets("installer_deps.zip", depsLocation);
             copyAssets("zipalign", zipAlignLocation);
-            copyAssets("cert.bks", keystoreLocation);
 
             loggerHelper.Log("Preparing Exectables");
             makeExecutable(zipAlignLocation);
 
             loggerHelper.Log("Starting patch");
 
+            String outputApkScoped = Paths.get(tempPath.toString(), "base.apk").toString();
+            String outputApk = Paths.get(PublishedBase, application.packageName + ".apk").toString();
+
             boolean success = Main.Run(new Properties() {{
                 targetApk = application.apkLocation;
+                outputApk = outputApkScoped;
                 tempDir = tempPath.toString();
                 logger = loggerHelper;
                 dependencies = depsLocation;
-                unityArchive = unityAssetsLocation;
                 zipAlign = zipAlignLocation;
-                keystore = keystoreLocation;
-                keystorePass = "123456";
             }});
 
             if (success) {
+                try {
+                    requestWritePermission();
+                    Files.move(Paths.get(outputApkScoped), Paths.get(outputApk), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    loggerHelper.Log(e.toString());
+                    loggerHelper.Log("using fallback folder");
+                    outputApk = outputApkScoped;
+                }
+
                 loggerHelper.Log("Application Successfully patched. Reinstalling.");
 
+                if (1==1)
+                    return;
+
+                String finalOutputApk = outputApk;
                 runOnUiThread(() -> {
                     installerHelper = new ApkInstallerHelper(this, application.appName);
-                    installerHelper.InstallApk(Paths.get(tempPath.toString(), "base.apk").toString());
+                    installerHelper.InstallApk(Paths.get(finalOutputApk).toString());
                 });
             }
 
@@ -290,31 +340,4 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
             installerHelper.onActivityResult(requestCode, resultCode, data);
     }
 
-    protected void downloadFile(String _url, String _output) throws IOException {
-        URL url = new URL(_url);
-        URLConnection connection = url.openConnection();
-        connection.connect();
-
-        int lenghtOfFile = connection.getContentLength();
-
-        // download the file
-        InputStream input = new BufferedInputStream(url.openStream(),
-                8192);
-
-        // Output stream
-        OutputStream output = new FileOutputStream(_output);
-
-        byte data[] = new byte[1024];
-
-        int count;
-        while ((count = input.read(data)) != -1) {
-            output.write(data, 0, count);
-        }
-
-        output.flush();
-
-        // closing streams
-        output.close();
-        input.close();
-    }
 }

@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         // Then you start a new Activity via Intent
         Intent intent = new Intent();
         intent.setClass(this, ViewApplication.class);
-        intent.putExtra("target.packageName", supportedApplications.get(position).appName);
+        intent.putExtra("target.packageName", supportedApplications.get(position).packageName);
         startActivity(intent);
     }
 

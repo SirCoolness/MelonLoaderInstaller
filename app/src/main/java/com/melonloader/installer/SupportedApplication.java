@@ -25,12 +25,14 @@ public class SupportedApplication {
     public boolean patched;
     public String appName;
     public String apkLocation;
+    public String packageName;
 
     public SupportedApplication(PackageManager pm, ApplicationInfo info)
     {
         application = info;
         icon = info.loadIcon(pm);
         appName = info.packageName;
+        packageName = info.packageName;
         apkLocation = info.publicSourceDir;
 
         CheckPatched();

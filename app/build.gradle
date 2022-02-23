@@ -3,11 +3,12 @@ plugins {
 }
 
 android {
-    compileSdk 31
+    compileSdk 30
 
     defaultConfig {
         applicationId "com.melonloader.installer"
         minSdk 27
+        // sdk 28 is the highest version that can use execute native binaries
         targetSdk 28
         versionCode 1
         versionName "1.0"
