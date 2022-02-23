@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Trace;
 import android.util.Log;
@@ -38,34 +39,46 @@ public class ApkInstallerHelper {
     {
         next = () -> InternalInstall(path);
         UninstallPackage();
-//        InternalInstall(path);
     }
 
     protected void InternalInstall(String path)
     {
-        Uri filePath = uriFromFile(context, new File(path));
+        AsyncTask.execute(() -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                return;
+            }
 
-        Intent install = new Intent(Intent.ACTION_VIEW);
-        install.setDataAndType(filePath, "application/vnd.android.package-archive");
+            context.runOnUiThread(() -> {
+                Uri filePath = uriFromFile(context, new File(path));
 
-        install.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        install.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                Intent install = new Intent(Intent.ACTION_VIEW);
+                install.setDataAndType(filePath, "application/vnd.android.package-archive");
 
-        try {
-            context.startActivity(install);
-        } catch (ActivityNotFoundException e) {
-            e.printStackTrace();
-            Log.e("TAG", "Error in opening the file!");
-        }
+                install.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                install.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                try {
+                    context.startActivity(install);
+                } catch (ActivityNotFoundException e) {
+                    e.printStackTrace();
+                    Log.e("TAG", "Error in opening the file!");
+                }
+            });
+        });
     }
 
     protected void UninstallPackage()
     {
-        pending = Intent.ACTION_DELETE;
+        context.runOnUiThread(() -> {
+            pending = Intent.ACTION_DELETE;
 
-        Intent intent = new Intent(Intent.ACTION_DELETE);
-        intent.setData(Uri.parse("package:" + packageName));
-        context.startActivityForResult(intent, 1000);
+            Intent intent = new Intent(Intent.ACTION_DELETE);
+            intent.setData(Uri.parse("package:" + packageName));
+            context.startActivityForResult(intent, 1000);
+        });
     }
 
     private static Uri uriFromFile(Context context, File file) {

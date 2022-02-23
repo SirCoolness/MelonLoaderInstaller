@@ -141,15 +141,6 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
     {
         loggerHelper.Clear();
 
-        String PublishedBase = Paths.get(Environment.getExternalStorageDirectory().getPath().toString(), "MelonLoader").toString();
-        try {
-            Files.createDirectories(Paths.get(PublishedBase));
-        } catch (IOException e) {
-            e.printStackTrace();
-            loggerHelper.Log("ERROR: " + e.toString());
-            return;
-        }
-
         String MelonLoaderBase = getExternalFilesDir(null).toString();
 
         String depsLocation = Paths.get(MelonLoaderBase, "temp", "dependencies.zip").toString();
@@ -160,6 +151,16 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
         Button patchButton = findViewById(R.id.patchButton);
         Path tempPath = Paths.get(MelonLoaderBase, "temp", application.appName);
 
+        String PublishedBase = Paths.get(Environment.getExternalStorageDirectory().getPath().toString(), "MelonLoader").toString();
+        try {
+            Files.createDirectories(Paths.get(PublishedBase));
+        } catch (IOException e) {
+            e.printStackTrace();
+            loggerHelper.Log("ERROR: " + e.toString());
+            PublishedBase = MelonLoaderBase;
+        }
+
+        String finalPublishedBase = PublishedBase;
         AsyncTask.execute(() -> {
             runOnUiThread(() -> {
                 ActionBar actionBar = getSupportActionBar();
@@ -181,7 +182,7 @@ public class ViewApplication extends AppCompatActivity implements View.OnClickLi
             loggerHelper.Log("Starting patch");
 
             String outputApkScoped = Paths.get(tempPath.toString(), "base.apk").toString();
-            String outputApk = Paths.get(PublishedBase, application.packageName + ".apk").toString();
+            String outputApk = Paths.get(finalPublishedBase, application.packageName + ".apk").toString();
 
             boolean success = Main.Run(new Properties() {{
                 targetApk = application.apkLocation;
