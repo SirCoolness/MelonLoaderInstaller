@@ -2,14 +2,14 @@ package com.melonloader.installer;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import androidx.loader.content.AsyncTaskLoader;
-
 import com.melonloader.installer.core.Main;
+import com.melonloader.installer.helpers.UnityVersionDetector;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +31,7 @@ public class SupportedApplication {
     public String packageName;
     public String unityVersion;
     private boolean getVersionAttempted = false;
+    private AssetManager assetManager;
 
     public SupportedApplication(PackageManager pm, ApplicationInfo info)
     {
@@ -39,6 +40,12 @@ public class SupportedApplication {
         appName = info.packageName;
         packageName = info.packageName;
         apkLocation = info.publicSourceDir;
+
+        try {
+            assetManager = pm.getResourcesForApplication(info).getAssets();
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
 
         CheckPatched();
     }
@@ -60,6 +67,12 @@ public class SupportedApplication {
 
         getVersionAttempted = true;
 
+        if (assetManager == null)
+        {
+            Log.e("MelonLoader", "Cannot find asset manager for (" + packageName + ")");
+            return;
+        }
+
         try {
             Files.createDirectories(Paths.get(tempDir));
         } catch (IOException e) {
@@ -67,8 +80,10 @@ public class SupportedApplication {
             return;
         }
 
+        UnityVersionDetector detector = new UnityVersionDetector(assetManager);
+
         AsyncTask.execute(() -> {
-            unityVersion = Main.DetectUnityVersion(apkLocation, tempDir);
+            unityVersion = detector.TryGetVersion();
 
             if (unityVersion == null) {
                 return;
